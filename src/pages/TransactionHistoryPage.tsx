@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -43,72 +43,17 @@ import Footer from '@/components/layout/Footer';
 import Header from '@/components/layout/Header';
 import LeftSidebar from '@/components/layout/LeftSidebar';
 
-// Mock data for the transaction history
-const transactions = [
-  {
-    id: 'txn_1',
-    description: 'Received from J. Doe',
-    date: '2023-10-26',
-    type: 'incoming',
-    status: 'Completed',
-    currency: 'USD',
-    amount: 2500.0,
-  },
-  {
-    id: 'txn_2',
-    description: 'Spotify Subscription',
-    date: '2023-10-25',
-    type: 'outgoing',
-    status: 'Completed',
-    currency: 'EUR',
-    amount: -9.99,
-  },
-  {
-    id: 'txn_3',
-    description: 'Bank Transfer Top-up',
-    date: '2023-10-24',
-    type: 'top-up',
-    status: 'Completed',
-    currency: 'EUR',
-    amount: 5000.0,
-  },
-  {
-    id: 'txn_4',
-    description: 'Payment to A. Smith',
-    date: '2023-10-23',
-    type: 'outgoing',
-    status: 'Pending',
-    currency: 'USD',
-    amount: -150.0,
-  },
-  {
-    id: 'txn_5',
-    description: 'Amazon Purchase',
-    date: '2023-10-22',
-    type: 'outgoing',
-    status: 'Completed',
-    currency: 'USD',
-    amount: -45.5,
-  },
-  {
-    id: 'txn_6',
-    description: 'Salary Deposit',
-    date: '2023-10-21',
-    type: 'incoming',
-    status: 'Completed',
-    currency: 'EUR',
-    amount: 3000.0,
-  },
-   {
-    id: 'txn_7',
-    description: 'Failed transfer to B. Lee',
-    date: '2023-10-20',
-    type: 'outgoing',
-    status: 'Failed',
-    currency: 'EUR',
-    amount: -200.0,
-  },
-];
+// Data structure interface
+interface Transaction {
+  id: string;
+  description: string;
+  date: string;
+  type: 'incoming' | 'outgoing' | 'top-up';
+  status: 'Completed' | 'Pending' | 'Failed';
+  currency: 'USD' | 'EUR';
+  amount: number;
+}
+
 
 const TransactionTypeIcon = ({ type }: { type: string }) => {
   switch (type) {
@@ -125,6 +70,17 @@ const TransactionTypeIcon = ({ type }: { type: string }) => {
 
 const TransactionHistoryPage = () => {
   console.log('TransactionHistoryPage loaded');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+
+  useEffect(() => {
+    const appDataString = localStorage.getItem('appData');
+    if (appDataString) {
+      const appData = JSON.parse(appDataString);
+      setTransactions(appData.transactions);
+      console.log('Transaction history loaded from localStorage.');
+    }
+  }, []);
+
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
@@ -204,15 +160,13 @@ const TransactionHistoryPage = () => {
                        <TableCell className="hidden sm:table-cell">{txn.date}</TableCell>
                        <TableCell className="hidden md:table-cell capitalize">{txn.type}</TableCell>
                       <TableCell>
-                        <Badge variant={txn.status === 'Completed' ? 'default' : (txn.status === 'Pending' ? 'secondary' : 'destructive')}>
-                          {txn.status}
-                        </Badge>
+                        <Badge variant={txn.status === 'Completed' ? 'default' : (txn.status === 'Pending' ? 'secondary' : 'destructive')}>\n                          {txn.status}\n                        </Badge>
                       </TableCell>
                       <TableCell className={`text-right font-medium ${txn.amount > 0 ? 'text-green-600' : 'text-foreground'}`}>
-                        {txn.amount.toLocaleString('en-US', {
+                        {new Intl.NumberFormat('en-US', {
                           style: 'currency',
                           currency: txn.currency,
-                        })}
+                        }).format(txn.amount)}
                       </TableCell>
                     </TableRow>
                   ))}

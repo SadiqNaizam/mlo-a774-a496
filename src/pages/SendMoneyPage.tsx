@@ -43,7 +43,40 @@ const SendMoneyPage: React.FC = () => {
       return;
     }
 
-    console.log('Transfer Details:', { recipient, amount, currency });
+    const appDataString = localStorage.getItem('appData');
+    if (!appDataString) {
+      toast.error('Could not retrieve account data. Please try refreshing.');
+      return;
+    }
+
+    const appData = JSON.parse(appDataString);
+    const numericAmount = parseFloat(amount);
+
+    // Check for sufficient funds
+    if (appData.balances[currency] < numericAmount) {
+      toast.error(`Insufficient ${currency} funds.`);
+      return;
+    }
+
+    // Update balance
+    appData.balances[currency] -= numericAmount;
+
+    // Create new transaction
+    const newTransaction = {
+      id: `txn_${new Date().getTime()}`,
+      description: `Transfer to ${recipient}`,
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      type: 'outgoing' as const,
+      status: 'Completed' as const,
+      currency: currency as 'USD' | 'EUR',
+      amount: -numericAmount,
+    };
+
+    // Add new transaction to the beginning of the list
+    appData.transactions.unshift(newTransaction);
+
+    // Save updated data back to localStorage
+    localStorage.setItem('appData', JSON.stringify(appData));
     
     // Show success toast
     toast.success(`Transfer of ${amount} ${currency} to ${recipient} initiated!`);
@@ -91,6 +124,8 @@ const SendMoneyPage: React.FC = () => {
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
                         required
+                        min="0.01"
+                        step="0.01"
                       />
                     </div>
                     <div className="grid gap-3">
